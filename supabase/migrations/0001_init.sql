@@ -19,7 +19,8 @@ create index if not exists monthly_sales_period_idx on public.monthly_sales (per
 create index if not exists monthly_sales_family_idx on public.monthly_sales (family);
 
 -- Vue de confort : exercice comptable et position du mois dans l'exercice.
-create or replace view public.monthly_sales_fiscal as
+create or replace view public.monthly_sales_fiscal
+with (security_invoker = on) as
 select
   s.*,
   case when substring(s.period from 6 for 2)::int >= 4

@@ -82,26 +82,37 @@ Par défaut, l'outil fonctionne **sans serveur** : l'historique livré (avril 20
 est embarqué dans l'application et les imports sont conservés dans le stockage local du
 navigateur. Rien à installer, mais les données restent sur le poste utilisé.
 
-### Basculer sur Supabase (multi-postes)
+### Mode Supabase (multi-postes)
 
-1. Créer un projet Supabase, puis exécuter `supabase/migrations/0001_init.sql`
-   (SQL Editor ou `supabase db push`).
-2. Renseigner les variables d'environnement :
+Le projet Supabase est déjà provisionné :
+
+| | |
+|---|---|
+| Projet | `chiffre-conflans-familles` |
+| Référence | `xmydzxguxesdauykajhr` |
+| URL API | `https://xmydzxguxesdauykajhr.supabase.co` |
+| Région | Paris (eu-west-3) |
+| Table | `monthly_sales` — 779 lignes chargées (avril 2024 → août 2026) |
+
+Pour l'activer, créer un fichier `.env` à la racine :
 
 ```bash
 cp .env.example .env
-# VITE_SUPABASE_URL=https://xxxx.supabase.co
-# VITE_SUPABASE_ANON_KEY=...
+# VITE_SUPABASE_URL=https://xmydzxguxesdauykajhr.supabase.co
+# VITE_SUPABASE_ANON_KEY=<clé publiable, dashboard Supabase > Project Settings > API Keys>
 ```
 
-3. Charger l'historique une première fois :
+Le fichier `.env` n'est pas versionné. Au démarrage, le bandeau en haut à droite affiche
+« Supabase » et tous les imports vont dans la table `monthly_sales`.
+
+Pour recharger l'historique de zéro dans un autre projet :
 
 ```bash
 SUPABASE_URL=https://xxxx.supabase.co SUPABASE_KEY=<clé> npm run push:supabase
 ```
 
-Au prochain démarrage, le bandeau en haut à droite affiche « Supabase » et tous les
-imports vont dans la table `monthly_sales`.
+Si la base est injoignable (réseau coupé, projet en pause), l'écran affiche l'erreur et un
+bouton « Réessayer » plutôt que de rester en chargement.
 
 Les policies livrées ouvrent la table au rôle `anon` : l'accès réel est filtré par le mot de
 passe de l'application. Pour un cloisonnement plus strict, passer les policies sur

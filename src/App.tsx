@@ -145,7 +145,14 @@ export default function App() {
       )}
 
       <main>
-        {error && <div className="msg err">Erreur de chargement : {error}</div>}
+        {error && (
+          <div className="msg err">
+            <div className="row spread">
+              <span>Erreur de chargement : {error}</span>
+              <button className="btn" onClick={refresh}>Réessayer</button>
+            </div>
+          </div>
+        )}
         {!rows && !error && <p className="muted">Chargement…</p>}
 
         {ready && tab === 'synthese' && (
