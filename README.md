@@ -133,16 +133,17 @@ vers `/src/main.tsx`, que le navigateur ne sait pas exécuter — la page reste 
 C'est la cause à vérifier en premier devant un écran vide (Ctrl+U : si le HTML servi
 contient `/src/main.tsx` au lieu de `/assets/index-*.js`, le build n'a pas tourné).
 
-Variables d'environnement à déclarer dans le projet Pages (onglet *Settings › Variables*),
-sinon l'application démarre en stockage local sur chaque poste :
+Les variables Supabase sont versionnées dans `.env.production`, que Vite lit pendant la
+build de production : Cloudflare les reprend donc automatiquement, sans rien saisir dans le
+dashboard. Elles ne contiennent que la clé publiable, prévue pour vivre côté navigateur —
+la clé de service ne doit jamais y figurer.
 
-```
-VITE_SUPABASE_URL=https://xmydzxguxesdauykajhr.supabase.co
-VITE_SUPABASE_ANON_KEY=<clé publiable>
-```
+Pour pointer un déploiement vers un autre projet Supabase, deux possibilités :
+modifier `.env.production`, ou déclarer les mêmes variables dans *Settings › Variables and
+Secrets* du projet Pages (elles prennent alors le dessus). Dans les deux cas elles sont
+lues **au moment du build** : après modification, relancer un déploiement.
 
-Elles sont lues **au moment du build** : après les avoir ajoutées ou modifiées, relancer
-un déploiement pour qu'elles soient prises en compte.
+En développement local, `.env` (non versionné) l'emporte sur `.env.production`.
 
 `wrangler.toml` déclare déjà `pages_build_output_dir = "dist"`, `.nvmrc` fixe Node 22 et
 `public/_redirects` renvoie toutes les URL vers `index.html`. Le champ `name` de
