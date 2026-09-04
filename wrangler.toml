@@ -1,0 +1,8 @@
+# Déploiement Cloudflare Pages.
+# `name` doit correspondre exactement au nom du projet Pages (ici famille-conflans,
+# d'où l'URL famille-conflans.pages.dev) : un nom différent fait échouer le déploiement.
+# Cloudflare lit `pages_build_output_dir` pour savoir quoi publier ; la commande de
+# build ("npm run build") reste à renseigner dans les réglages du projet.
+name = "famille-conflans"
+compatibility_date = "2026-09-04"
+pages_build_output_dir = "dist"

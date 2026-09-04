@@ -118,6 +118,36 @@ Les policies livrées ouvrent la table au rôle `anon` : l'accès réel est filt
 passe de l'application. Pour un cloisonnement plus strict, passer les policies sur
 `authenticated` et brancher Supabase Auth.
 
+## Déploiement (Cloudflare Pages)
+
+Réglages du projet Pages — les trois lignes qui comptent :
+
+| Réglage | Valeur |
+|---|---|
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Root directory | *(vide, la racine du dépôt)* |
+
+Sans commande de build, Cloudflare publie le dépôt tel quel : `index.html` pointe alors
+vers `/src/main.tsx`, que le navigateur ne sait pas exécuter — la page reste blanche.
+C'est la cause à vérifier en premier devant un écran vide (Ctrl+U : si le HTML servi
+contient `/src/main.tsx` au lieu de `/assets/index-*.js`, le build n'a pas tourné).
+
+Variables d'environnement à déclarer dans le projet Pages (onglet *Settings › Variables*),
+sinon l'application démarre en stockage local sur chaque poste :
+
+```
+VITE_SUPABASE_URL=https://xmydzxguxesdauykajhr.supabase.co
+VITE_SUPABASE_ANON_KEY=<clé publiable>
+```
+
+Elles sont lues **au moment du build** : après les avoir ajoutées ou modifiées, relancer
+un déploiement pour qu'elles soient prises en compte.
+
+`wrangler.toml` déclare déjà `pages_build_output_dir = "dist"`, `.nvmrc` fixe Node 22 et
+`public/_redirects` renvoie toutes les URL vers `index.html`. Le champ `name` de
+`wrangler.toml` doit rester identique au nom du projet Pages, sinon le déploiement échoue.
+
 ## Regénérer le jeu de données livré
 
 Les 29 exports d'origine sont conservés dans `data/sources/`. Après en avoir ajouté :
