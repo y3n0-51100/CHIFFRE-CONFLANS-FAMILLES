@@ -140,14 +140,6 @@ vers `/src/main.tsx`, que le navigateur ne sait pas exécuter — la page reste 
 C'est la cause à vérifier en premier devant un écran vide (Ctrl+U : si le HTML servi
 contient `/src/main.tsx` au lieu de `/assets/index-*.js`, le build n'a pas tourné).
 
-**Le dossier `dist/` est volontairement versionné** : `wrangler.toml` déclarant
-`pages_build_output_dir = "dist"`, Cloudflare publie ce dossier même si aucune commande
-de build n'est configurée, et le site fonctionne alors sans réglage supplémentaire.
-Contrepartie : après toute modification du code, il faut lancer `npm run build` et
-committer `dist/` avec le reste, sinon le site en ligne reste sur l'ancienne version.
-Une fois la commande de build renseignée dans le dashboard, `dist/` peut être retiré du
-dépôt (`git rm -r --cached dist` et remettre `dist/` dans `.gitignore`).
-
 Les variables Supabase sont versionnées dans `.env.production`, que Vite lit pendant la
 build de production : Cloudflare les reprend donc automatiquement, sans rien saisir dans le
 dashboard. Elles ne contiennent que la clé publiable, prévue pour vivre côté navigateur —
