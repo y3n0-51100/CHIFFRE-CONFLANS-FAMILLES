@@ -22,16 +22,23 @@ Mot de passe d'accès : celui défini dans `src/lib/auth.ts`.
 
 ## Écrans
 
-- **Synthèse** — cumul d'exercice, écart et évolution vs l'exercice de comparaison,
-  chiffre mensuel comparé, cumul depuis le 1er avril, plus fortes progressions et baisses.
-- **Familles** — tableau trié et filtrable de toutes les familles (CA, écart, évolution, poids),
-  et, quand une famille est sélectionnée, son détail mensuel et sa tendance par exercice.
-- **Budget** — budgets prévisionnels par famille et par mois, en trois scénarios.
+- **Synthèse** — chiffre de l'exercice, écart et évolution vs l'exercice de comparaison,
+  lecture automatique des chiffres en clair, chiffre mensuel comparé, cumul depuis le
+  1er avril, tendance de fond sur 12 mois glissants, plus fortes progressions et baisses.
+- **Familles** — tableau trié, filtrable et exportable en CSV (CA, écart, évolution, poids) ;
+  vue *Saisonnalité* en carte de chaleur famille × mois ; détail mensuel et trajectoire
+  pluriannuelle de la famille sélectionnée.
+- **Budget** — budgets prévisionnels par famille et par mois, en trois scénarios, exportables.
 - **Import** — dépôt du fichier Excel mensuel, contrôle avant enregistrement, gestion des mois.
+
+Thème clair ou sombre au choix (bouton en haut à droite), mémorisé sur le poste ; sans choix
+explicite, l'application suit le réglage du système.
 
 ### Filtres communs
 - **Exercice** / **Comparé à** : n'importe quelle paire d'exercices présents en base.
 - **Famille** : une famille ou toutes.
+- **Univers** : meuble, décoration/textile, gros et petit électroménager, image-son-tech —
+  restreint d'un clic l'ensemble des écrans à un univers marché.
 - **Périmètre** :
   - *Mois communs* — ne compare que les mois présents dans les deux exercices
     (comparaison honnête tant que l'exercice en cours n'est pas terminé) ;

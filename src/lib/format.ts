@@ -26,7 +26,7 @@ export function trendClass(n: number | null | undefined): string {
 
 /** Compact pour les axes : 154 000 -> "154 k". */
 export function fmtCompact(n: number): string {
-  if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace('.', ',')} M`;
+  if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toFixed(2).replace('.', ',')} M`;
   if (Math.abs(n) >= 1000) return `${Math.round(n / 1000)} k`;
   return num0.format(n);
 }

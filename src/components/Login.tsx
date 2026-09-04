@@ -19,6 +19,7 @@ export default function Login({ onUnlock }: { onUnlock: () => void }) {
   return (
     <div className="login">
       <form className="login-card" onSubmit={submit}>
+        <span className="login-mark" aria-hidden="true"><i /><i /><i /></span>
         <h1>Chiffre Conflans</h1>
         <p>Analyse du chiffre d'affaires par famille</p>
         <input

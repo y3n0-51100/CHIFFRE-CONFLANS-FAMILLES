@@ -8,6 +8,8 @@ import { isUnlocked, lock } from './lib/auth.ts';
 import { loadRows, storeMode } from './lib/store.ts';
 import { listFamilies, listFiscalYears } from './lib/analytics.ts';
 import { currentFiscalYear, fiscalLabel } from './lib/fiscal.ts';
+import { UNIVERSE_LABELS, universeOf, type Universe } from './lib/market.ts';
+import { applyTheme, initialTheme, type Theme } from './lib/theme.ts';
 import type { Metric, Row } from './lib/types.ts';
 
 type Tab = 'synthese' | 'familles' | 'budget' | 'import';
@@ -19,6 +21,8 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'import', label: 'Import' },
 ];
 
+const UNIVERSES: Universe[] = ['MEUBLE', 'DECO', 'GEM', 'PEM', 'TECH', 'AUTRE'];
+
 export default function App() {
   const [unlocked, setUnlocked] = useState(isUnlocked());
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -26,13 +30,17 @@ export default function App() {
   /** État de la source de données, affiché dans le bandeau. */
   const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
   const [tab, setTab] = useState<Tab>('synthese');
+  const [theme, setTheme] = useState<Theme>(initialTheme);
 
   const [metric, setMetric] = useState<Metric>('ordre');
   const [family, setFamily] = useState<string>('');
+  const [universe, setUniverse] = useState<Universe | null>(null);
   const [fyCurrent, setFyCurrent] = useState<number | null>(null);
   const [fyCompare, setFyCompare] = useState<number | null>(null);
   /** Comparaison limitée aux mois présents dans les deux exercices. */
   const [samePerimeter, setSamePerimeter] = useState(true);
+
+  useEffect(() => { applyTheme(theme); }, [theme]);
 
   const refresh = () => {
     setStatus('loading');
@@ -53,7 +61,17 @@ export default function App() {
   }, [unlocked]);
 
   const years = useMemo(() => (rows ? listFiscalYears(rows) : []), [rows]);
-  const families = useMemo(() => (rows ? listFamilies(rows) : []), [rows]);
+  const allFamilies = useMemo(() => (rows ? listFamilies(rows) : []), [rows]);
+
+  // Le filtre "univers" restreint la liste des familles proposées et les agrégats.
+  const families = useMemo(
+    () => (universe ? allFamilies.filter((f) => universeOf(f) === universe) : allFamilies),
+    [allFamilies, universe],
+  );
+  const scopedRows = useMemo(
+    () => (rows && universe ? rows.filter((r) => universeOf(r.family) === universe) : rows),
+    [rows, universe],
+  );
 
   // Sélection par défaut : exercice en cours (ou le plus récent) comparé au précédent.
   useEffect(() => {
@@ -62,6 +80,11 @@ export default function App() {
     setFyCurrent(cur);
     setFyCompare(years.find((y) => y < cur) ?? years[years.length - 1]);
   }, [years, fyCurrent]);
+
+  // Une famille sélectionnée hors de l'univers retenu n'a plus de sens : on la relâche.
+  useEffect(() => {
+    if (family && universe && universeOf(family) !== universe) setFamily('');
+  }, [family, universe]);
 
   // Libellé du bandeau : la source de données ET si elle répond.
   const onSupabase = storeMode === 'supabase';
@@ -82,22 +105,20 @@ export default function App() {
 
   if (!unlocked) return <Login onUnlock={() => setUnlocked(true)} />;
 
-  const ready = rows !== null && fyCurrent !== null && fyCompare !== null;
+  const ready = scopedRows !== null && fyCurrent !== null && fyCompare !== null;
   const showFilters = tab === 'synthese' || tab === 'familles';
 
   return (
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          Chiffre Conflans<span>BUT · analyse par famille</span>
+          <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>
+          <b>Chiffre Conflans</b>
+          <span>BUT · analyse par famille</span>
         </div>
         <nav className="tabs">
           {TABS.map((t) => (
-            <button
-              key={t.id}
-              className={`tab${tab === t.id ? ' active' : ''}`}
-              onClick={() => setTab(t.id)}
-            >
+            <button key={t.id} className={`tab${tab === t.id ? ' active' : ''}`} onClick={() => setTab(t.id)}>
               {t.label}
             </button>
           ))}
@@ -105,12 +126,14 @@ export default function App() {
         <div className="topbar-right">
           <span className={`badge ${status}`} title={sourceHint}>{sourceLabel}</span>
           <button
-            className="btn btn-ghost"
-            onClick={() => {
-              lock();
-              setUnlocked(false);
-            }}
+            className="icon-btn"
+            title={theme === 'dark' ? 'Passer en clair' : 'Passer en sombre'}
+            aria-label={theme === 'dark' ? 'Passer en clair' : 'Passer en sombre'}
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           >
+            {theme === 'dark' ? '☀' : '☾'}
+          </button>
+          <button className="btn btn-ghost" onClick={() => { lock(); setUnlocked(false); }}>
             Verrouiller
           </button>
         </div>
@@ -132,26 +155,20 @@ export default function App() {
           <div className="field">
             <label>Exercice</label>
             <select value={fyCurrent ?? ''} onChange={(e) => setFyCurrent(Number(e.target.value))}>
-              {years.map((y) => (
-                <option key={y} value={y}>{fiscalLabel(y)}</option>
-              ))}
+              {years.map((y) => <option key={y} value={y}>{fiscalLabel(y)}</option>)}
             </select>
           </div>
           <div className="field">
             <label>Comparé à</label>
             <select value={fyCompare ?? ''} onChange={(e) => setFyCompare(Number(e.target.value))}>
-              {years.filter((y) => y !== fyCurrent).map((y) => (
-                <option key={y} value={y}>{fiscalLabel(y)}</option>
-              ))}
+              {years.filter((y) => y !== fyCurrent).map((y) => <option key={y} value={y}>{fiscalLabel(y)}</option>)}
             </select>
           </div>
           <div className="field">
             <label>Famille</label>
             <select value={family} onChange={(e) => setFamily(e.target.value)}>
               <option value="">Toutes les familles</option>
-              {families.map((f) => (
-                <option key={f} value={f}>{f}</option>
-              ))}
+              {families.map((f) => <option key={f} value={f}>{f}</option>)}
             </select>
           </div>
           <div className="field">
@@ -163,6 +180,23 @@ export default function App() {
               <button className={!samePerimeter ? 'active' : ''} onClick={() => setSamePerimeter(false)}>
                 Exercice complet
               </button>
+            </div>
+          </div>
+          <div className="field">
+            <label>Univers</label>
+            <div className="chips">
+              <button className={`chip${universe === null ? ' active' : ''}`} onClick={() => setUniverse(null)}>
+                Tous
+              </button>
+              {UNIVERSES.map((u) => (
+                <button
+                  key={u}
+                  className={`chip${universe === u ? ' active' : ''}`}
+                  onClick={() => setUniverse(universe === u ? null : u)}
+                >
+                  {UNIVERSE_LABELS[u]}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -181,29 +215,20 @@ export default function App() {
 
         {ready && tab === 'synthese' && (
           <Overview
-            rows={rows}
-            metric={metric}
-            fyCurrent={fyCurrent}
-            fyCompare={fyCompare}
-            family={family || null}
-            samePerimeter={samePerimeter}
-            onPickFamily={setFamily}
+            rows={scopedRows} metric={metric} fyCurrent={fyCurrent} fyCompare={fyCompare}
+            family={family || null} universe={universe} samePerimeter={samePerimeter}
+            theme={theme} onPickFamily={setFamily}
           />
         )}
 
         {ready && tab === 'familles' && (
           <Families
-            rows={rows}
-            metric={metric}
-            fyCurrent={fyCurrent}
-            fyCompare={fyCompare}
-            family={family || null}
-            samePerimeter={samePerimeter}
-            onPickFamily={setFamily}
+            rows={scopedRows} metric={metric} fyCurrent={fyCurrent} fyCompare={fyCompare}
+            family={family || null} samePerimeter={samePerimeter} theme={theme} onPickFamily={setFamily}
           />
         )}
 
-        {rows && tab === 'budget' && <BudgetPanel rows={rows} />}
+        {rows && tab === 'budget' && <BudgetPanel rows={rows} theme={theme} />}
 
         {rows && tab === 'import' && <ImportPanel rows={rows} onChanged={refresh} />}
       </main>

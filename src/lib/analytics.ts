@@ -1,5 +1,6 @@
 import type { FiscalYear, Metric, Row } from './types.ts';
 import { fiscalIndexOf, fiscalYearOf, periodsOfFiscalYear } from './fiscal.ts';
+import { fmtPct, fmtSignedEur } from './format.ts';
 
 export interface MonthPoint {
   index: number;          // 0 = avril
@@ -146,4 +147,61 @@ export const allMonths = new Set(Array.from({ length: 12 }, (_, i) => i));
 export function periodsMissing(rows: Row[], fy: FiscalYear): string[] {
   const present = new Set(rows.map((r) => r.period));
   return periodsOfFiscalYear(fy).filter((p) => !present.has(p));
+}
+
+/** Somme glissante sur 12 mois : lisse la saisonnalité et montre la tendance de fond. */
+export function rollingTwelve(
+  rows: Row[],
+  metric: Metric,
+  keep: (family: string) => boolean,
+): { period: string; value: number }[] {
+  const byPeriod = new Map<string, number>();
+  for (const r of rows) {
+    if (!keep(r.family)) continue;
+    const v = metric === 'ordre' ? r.ordre : r.sortie;
+    byPeriod.set(r.period, (byPeriod.get(r.period) ?? 0) + v);
+  }
+  const periods = [...byPeriod.keys()].sort();
+  const out: { period: string; value: number }[] = [];
+  for (let i = 11; i < periods.length; i++) {
+    let sum = 0;
+    for (let j = i - 11; j <= i; j++) sum += byPeriod.get(periods[j]) ?? 0;
+    out.push({ period: periods[i], value: sum });
+  }
+  return out;
+}
+
+/** Une ou deux phrases de lecture des chiffres, pour ouvrir la synthèse. */
+export function insights(lines: FamilyLine[], cur: number, cmp: number): { tone: 'up' | 'down' | 'neutral'; text: string }[] {
+  const out: { tone: 'up' | 'down' | 'neutral'; text: string }[] = [];
+  if (lines.length === 0) return out;
+  const moved = lines.filter((l) => l.compare > 0 || l.current > 0);
+  const best = [...moved].sort((a, b) => b.delta - a.delta)[0];
+  const worst = [...moved].sort((a, b) => a.delta - b.delta)[0];
+  const gap = cur - cmp;
+
+  if (best && best.delta > 0) {
+    out.push({
+      tone: 'up',
+      text: `${best.family} porte la croissance : ${fmtSignedEur(best.delta)} sur la période, soit ${fmtPct(best.pct)}.`,
+    });
+  }
+  if (worst && worst.delta < 0) {
+    const share = gap < 0 ? Math.min(100, (worst.delta / gap) * 100) : null;
+    out.push({
+      tone: 'down',
+      text:
+        `${worst.family} pèse le plus lourd : ${fmtSignedEur(worst.delta)}` +
+        (share !== null ? `, soit ${share.toFixed(0)} % du recul total.` : '.'),
+    });
+  }
+  const top3 = lines.slice(0, 3);
+  const weight = top3.reduce((s, l) => s + l.share, 0);
+  if (top3.length === 3) {
+    out.push({
+      tone: 'neutral',
+      text: `${top3.map((l) => l.family).join(', ')} concentrent ${weight.toFixed(0)} % du chiffre de la période.`,
+    });
+  }
+  return out;
 }
