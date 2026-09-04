@@ -116,8 +116,30 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
   color: var(--text-soft);
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 3px 9px;
+  padding: 3px 10px 3px 8px;
   background: var(--surface-alt);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+}
+/* Pastille d'état de la source de données. */
+.badge::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-faint);
+}
+.badge.ok { color: var(--up); border-color: #cbe6da; background: var(--up-soft); }
+.badge.ok::before { background: var(--up); }
+.badge.error { color: var(--down); border-color: #f0cfcd; background: var(--down-soft); }
+.badge.error::before { background: var(--down); }
+.badge.loading::before { animation: pulse 1.1s ease-in-out infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 
 .filters {

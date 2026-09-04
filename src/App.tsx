@@ -23,6 +23,8 @@ export default function App() {
   const [unlocked, setUnlocked] = useState(isUnlocked());
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** État de la source de données, affiché dans le bandeau. */
+  const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
   const [tab, setTab] = useState<Tab>('synthese');
 
   const [metric, setMetric] = useState<Metric>('ordre');
@@ -33,12 +35,17 @@ export default function App() {
   const [samePerimeter, setSamePerimeter] = useState(true);
 
   const refresh = () => {
+    setStatus('loading');
     loadRows()
       .then((r) => {
         setRows(r);
         setError(null);
+        setStatus('ok');
       })
-      .catch((e: Error) => setError(e.message));
+      .catch((e: Error) => {
+        setError(e.message);
+        setStatus('error');
+      });
   };
 
   useEffect(() => {
@@ -55,6 +62,23 @@ export default function App() {
     setFyCurrent(cur);
     setFyCompare(years.find((y) => y < cur) ?? years[years.length - 1]);
   }, [years, fyCurrent]);
+
+  // Libellé du bandeau : la source de données ET si elle répond.
+  const onSupabase = storeMode === 'supabase';
+  const sourceLabel = onSupabase
+    ? status === 'ok'
+      ? `Supabase · ${rows?.length ?? 0} lignes`
+      : status === 'error'
+        ? 'Supabase · injoignable'
+        : 'Supabase · connexion…'
+    : 'Stockage local du navigateur';
+  const sourceHint = onSupabase
+    ? status === 'ok'
+      ? 'Base commune : les imports sont partagés avec les autres postes.'
+      : status === 'error'
+        ? "La base ne répond pas. Les chiffres affichés ne sont pas à jour tant que la connexion n'est pas rétablie."
+        : 'Interrogation de la base en cours.'
+    : "Les données restent sur ce poste. Renseigner VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY pour passer sur la base commune.";
 
   if (!unlocked) return <Login onUnlock={() => setUnlocked(true)} />;
 
@@ -79,7 +103,7 @@ export default function App() {
           ))}
         </nav>
         <div className="topbar-right">
-          <span className="badge">{storeMode === 'supabase' ? 'Supabase' : 'Stockage local'}</span>
+          <span className={`badge ${status}`} title={sourceHint}>{sourceLabel}</span>
           <button
             className="btn btn-ghost"
             onClick={() => {
