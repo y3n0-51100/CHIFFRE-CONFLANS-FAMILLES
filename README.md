@@ -258,10 +258,28 @@ Réglages du projet Pages — les trois lignes qui comptent :
 | Build output directory | `dist` |
 | Root directory | *(vide, la racine du dépôt)* |
 
-Sans commande de build, Cloudflare publie le dépôt tel quel : `index.html` pointe alors
-vers `/src/main.tsx`, que le navigateur ne sait pas exécuter — la page reste blanche.
-C'est la cause à vérifier en premier devant un écran vide (Ctrl+U : si le HTML servi
-contient `/src/main.tsx` au lieu de `/assets/index-*.js`, le build n'a pas tourné).
+### Le dossier `dist` est versionné — ne pas l'ignorer
+
+C'est la ceinture de sécurité du déploiement. Sans commande de build configurée sur le projet
+Pages, Cloudflare ne construit rien : il publie le dossier désigné par `pages_build_output_dir`
+tel qu'il le trouve dans le dépôt. Si `dist` n'y est pas, le site servi reste figé sur le
+dernier déploiement, quoi qu'on pousse ensuite — c'est exactement ce qui s'est produit après le
+commit qui avait retiré `dist` des fichiers suivis.
+
+**Conséquence pratique : après toute modification du code, régénérer et committer le build.**
+
+```bash
+npm run build
+git add dist && git commit -m "…"
+```
+
+Si une commande de build est configurée sur le projet Pages, elle reconstruit `dist` au
+déploiement et la version versionnée est simplement écrasée : aucun conflit, la sécurité ne
+coûte rien.
+
+Devant un écran blanc, Ctrl+U : si le HTML servi contient `/src/main.tsx` au lieu de
+`/assets/index-*.js`, c'est le fichier source qui est publié à la place du build — le dossier
+publié est mal désigné.
 
 `wrangler.toml` déclare `pages_build_output_dir = "dist"`, `.nvmrc` fixe Node 22 et
 `public/_redirects` renvoie toutes les URL vers `index.html`. **Le champ `name` de
