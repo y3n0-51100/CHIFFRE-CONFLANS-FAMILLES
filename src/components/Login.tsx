@@ -1,18 +1,33 @@
 import { useState } from 'react';
-import { checkPassword, unlock } from '../lib/auth.ts';
+import { signInShared, signInWithAccount, type Session } from '../lib/session.ts';
+import { supabaseEnabled } from '../lib/supabase.ts';
 
-export default function Login({ onUnlock }: { onUnlock: () => void }) {
-  const [value, setValue] = useState('');
-  const [error, setError] = useState(false);
+type Mode = 'compte' | 'poste';
 
-  const submit = (e: React.FormEvent) => {
+export default function Login({ onSession }: { onSession: (s: Session) => void }) {
+  const [mode, setMode] = useState<Mode>(supabaseEnabled ? 'compte' : 'poste');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (checkPassword(value)) {
-      unlock();
-      onUnlock();
-    } else {
-      setError(true);
-      setValue('');
+    setError(null);
+    if (mode === 'poste') {
+      const s = signInShared(password);
+      if (s) onSession(s);
+      else { setError('Mot de passe incorrect.'); setPassword(''); }
+      return;
+    }
+    setBusy(true);
+    try {
+      onSession(await signInWithAccount(email.trim(), password));
+    } catch (err) {
+      setError((err as Error).message);
+      setPassword('');
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -20,20 +35,39 @@ export default function Login({ onUnlock }: { onUnlock: () => void }) {
     <div className="login">
       <form className="login-card" onSubmit={submit}>
         <span className="login-mark" aria-hidden="true"><i /><i /><i /></span>
-        <h1>Chiffre Conflans</h1>
-        <p>Analyse du chiffre d'affaires par famille</p>
+        <h1>BUT Conflans</h1>
+        <p>Pilotage du magasin 275 — accès réservé</p>
+
+        {supabaseEnabled && (
+          <div className="segmented" style={{ marginBottom: 16 }}>
+            <button type="button" className={mode === 'compte' ? 'active' : ''} onClick={() => { setMode('compte'); setError(null); }}>
+              Mon compte
+            </button>
+            <button type="button" className={mode === 'poste' ? 'active' : ''} onClick={() => { setMode('poste'); setError(null); }}>
+              Poste partagé
+            </button>
+          </div>
+        )}
+
+        {mode === 'compte' && (
+          <input
+            type="email" autoFocus placeholder="Adresse e-mail" autoComplete="username"
+            value={email} onChange={(e) => { setEmail(e.target.value); setError(null); }}
+          />
+        )}
         <input
-          type="password"
-          autoFocus
-          placeholder="Mot de passe"
-          value={value}
-          onChange={(e) => {
-            setValue(e.target.value);
-            setError(false);
-          }}
+          type="password" autoFocus={mode === 'poste'} placeholder="Mot de passe" autoComplete="current-password"
+          value={password} onChange={(e) => { setPassword(e.target.value); setError(null); }}
         />
-        {error && <p className="login-error">Mot de passe incorrect.</p>}
-        <button className="btn btn-primary" type="submit">Accéder</button>
+        {error && <p className="login-error">{error}</p>}
+        <button className="btn btn-primary" type="submit" disabled={busy}>
+          {busy ? 'Connexion…' : 'Accéder'}
+        </button>
+        <p className="note" style={{ textAlign: 'center' }}>
+          {mode === 'compte'
+            ? 'Compte nominatif : chaque saisie est signée de votre nom.'
+            : 'Poste partagé : accès complet, sans traçabilité des saisies.'}
+        </p>
       </form>
     </div>
   );

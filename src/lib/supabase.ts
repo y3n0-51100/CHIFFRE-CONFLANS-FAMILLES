@@ -27,7 +27,8 @@ const fetchWithTimeout: typeof fetch = async (input, init) => {
 
 export const supabase: SupabaseClient | null = supabaseEnabled
   ? createClient(url as string, key as string, {
-      auth: { persistSession: false },
+      // La session des comptes nominatifs doit survivre au rechargement de la page.
+      auth: { persistSession: true, autoRefreshToken: true },
       global: { fetch: fetchWithTimeout },
     })
   : null;
