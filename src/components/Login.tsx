@@ -5,7 +5,9 @@ import { supabaseEnabled } from '../lib/supabase.ts';
 type Mode = 'compte' | 'poste';
 
 export default function Login({ onSession }: { onSession: (s: Session) => void }) {
-  const [mode, setMode] = useState<Mode>(supabaseEnabled ? 'compte' : 'poste');
+  // Le compte nominatif n'a de sens qu'une fois des comptes créés : par défaut,
+  // l'écran s'ouvre sur le mot de passe du magasin, le mode réellement utilisé.
+  const [mode, setMode] = useState<Mode>('poste');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -40,11 +42,11 @@ export default function Login({ onSession }: { onSession: (s: Session) => void }
 
         {supabaseEnabled && (
           <div className="segmented" style={{ marginBottom: 16 }}>
-            <button type="button" className={mode === 'compte' ? 'active' : ''} onClick={() => { setMode('compte'); setError(null); }}>
-              Mon compte
-            </button>
             <button type="button" className={mode === 'poste' ? 'active' : ''} onClick={() => { setMode('poste'); setError(null); }}>
-              Poste partagé
+              Mot de passe du magasin
+            </button>
+            <button type="button" className={mode === 'compte' ? 'active' : ''} onClick={() => { setMode('compte'); setError(null); }}>
+              Compte personnel
             </button>
           </div>
         )}
@@ -57,6 +59,7 @@ export default function Login({ onSession }: { onSession: (s: Session) => void }
         )}
         <input
           type="password" autoFocus={mode === 'poste'} placeholder="Mot de passe" autoComplete="current-password"
+          key={mode}
           value={password} onChange={(e) => { setPassword(e.target.value); setError(null); }}
         />
         {error && <p className="login-error">{error}</p>}
@@ -65,8 +68,8 @@ export default function Login({ onSession }: { onSession: (s: Session) => void }
         </button>
         <p className="note" style={{ textAlign: 'center' }}>
           {mode === 'compte'
-            ? 'Compte nominatif : chaque saisie est signée de votre nom.'
-            : 'Poste partagé : accès complet, sans traçabilité des saisies.'}
+            ? "Compte personnel : chaque saisie est signée de votre nom. Demande qu'un compte ait été créé."
+            : 'Mot de passe du magasin : accès complet, sans traçabilité des saisies.'}
         </p>
       </form>
     </div>
