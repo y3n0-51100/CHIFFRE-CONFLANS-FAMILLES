@@ -808,3 +808,41 @@ tfoot td { font-weight: 600; border-top: 2px solid var(--border-strong); border-
   .today-inputs { grid-template-columns: 1fr 1fr; }
   .brief { max-width: none; }
 }
+
+/* ------------------------------------------------------------------
+   Téléphone. L'écran fait 844 px de haut : chaque pixel d'en-tête est
+   pris sur les chiffres. On tient en deux lignes au lieu de trois, et
+   les indicateurs passent sur deux colonnes pour se lire d'un coup.
+   ------------------------------------------------------------------ */
+@media (max-width: 640px) {
+  .topbar { padding: 8px 12px; gap: 8px 10px; }
+  /* Marque et boutons partagent la première ligne, les onglets prennent la seconde. */
+  .brand { order: 0; flex: 1; min-width: 0; }
+  .brand span { display: none; }
+  .topbar-right { order: 1; width: auto; margin-left: auto; gap: 6px; }
+  .tabs { order: 2; width: 100%; margin-left: 0; }
+  /* Le nom du poste et l'état de la base sont consultables ailleurs : ici, ils encombrent. */
+  .topbar-right .badge, .who { display: none; }
+
+  main { padding: 12px; }
+  .card { padding: 14px 15px; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .kpi-value { font-size: 22px; }
+  .kpi-value.hero-figure { font-size: 30px; }
+  .kpi-label { font-size: 10px; margin-bottom: 6px; }
+  .kpi-foot { font-size: 11.5px; gap: 6px; margin-top: 8px; }
+  .card h2 { font-size: 13px; }
+
+  /* Les deux objectifs du mois côte à côte plutôt que l'un sous l'autre. */
+  .exp-obj { gap: 12px; }
+  .exp-obj .field { flex: 1 1 42%; }
+  .exp-obj input { width: 100%; }
+  .exp-obj p { flex-basis: 100%; margin: 0; }
+
+  .exp-bar { gap: 8px; }
+  .month-nav b { min-width: auto; }
+  .today-inputs { gap: 10px; }
+  .landing-right { text-align: left; }
+  .prev-card .prev-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .brief h1 { font-size: 18px; }
+}
