@@ -90,7 +90,7 @@ export default function Today({ session }: { session: Session }) {
         <h2>Saisie de la journée</h2>
         <p className="card-sub">
           {editable
-            ? 'Quatre chiffres, enregistrés au fil de la frappe. Hors réseau, la saisie est conservée sur le poste et repart toute seule.'
+            ? "Le chiffre de la journée, relevé le soir ou le lendemain matin. Les deux premiers suffisent : les visiteurs et les tickets sont facultatifs et ne servent qu'à calculer la transformation et le panier moyen."
             : 'Consultation seule : la saisie est réservée à la direction et aux chefs de rayon.'}
         </p>
         <div className="today-inputs">
@@ -98,21 +98,25 @@ export default function Today({ session }: { session: Session }) {
             <label htmlFor="t-ca">CA du jour (€)</label>
             <input id="t-ca" key={`${key}-ca`} type="number" step="0.01" inputMode="decimal" placeholder="0"
               defaultValue={day?.realCA ?? ''} disabled={!editable} onBlur={(e) => set('ca')(e.target.value)} />
+            <span className="hint">chiffre d'affaires de la journée, TTC</span>
           </div>
           <div className="field">
             <label htmlFor="t-mg">Marge du jour (€)</label>
             <input id="t-mg" key={`${key}-mg`} type="number" step="0.01" inputMode="decimal" placeholder="0"
               defaultValue={day?.realMarge ?? ''} disabled={!editable} onBlur={(e) => set('marge')(e.target.value)} />
+            <span className="hint">marge dégagée en euros, pas en %</span>
           </div>
           <div className="field">
-            <label htmlFor="t-vis">Visiteurs</label>
+            <label htmlFor="t-vis">Visiteurs (entrées)</label>
             <input id="t-vis" key={`${key}-vis`} type="number" step="1" inputMode="numeric" placeholder="—"
               defaultValue={day?.visiteurs ?? ''} disabled={!editable} onBlur={(e) => set('visiteurs')(e.target.value)} />
+            <span className="hint">entrées porte · facultatif</span>
           </div>
           <div className="field">
             <label htmlFor="t-tick">Tickets</label>
             <input id="t-tick" key={`${key}-tick`} type="number" step="1" inputMode="numeric" placeholder="—"
               defaultValue={day?.tickets ?? ''} disabled={!editable} onBlur={(e) => set('tickets')(e.target.value)} />
+            <span className="hint">nombre de ventes du jour · facultatif</span>
           </div>
         </div>
         {freq && (freq.transfo !== null || freq.panier !== null || freq.indice !== null) && (
@@ -129,6 +133,10 @@ export default function Today({ session }: { session: Session }) {
             )}
           </div>
         )}
+        <p className="note">
+          Enregistré au fil de la saisie. Hors réseau, tout est conservé sur l'appareil et repart
+          vers la base dès que la connexion revient.
+        </p>
         {data.updatedBy && (
           <p className="note">
             Dernière modification par {data.updatedBy}
