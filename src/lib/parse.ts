@@ -5,8 +5,16 @@ import { makePeriod } from './fiscal.ts';
 export const UNASSIGNED = '(NON AFFECTE)';
 
 const HEADER_FAMILY = 'LIB_RAYON';
-const HEADER_ORDRE = "CATTC PRISE D'ORDRE";
-const HEADER_SORTIE = 'CA HORS-TAXE SORTIE';
+// Libellés acceptés (ancien export, export "CA_CA_PO_TTC" / "CA_CA_SORTIE_HT" depuis 09.26).
+const HEADERS_ORDRE = ["CATTC PRISE D'ORDRE", 'CA_CA_PO_TTC'];
+const HEADERS_SORTIE = ['CA HORS-TAXE SORTIE', 'CA_CA_SORTIE_HT'];
+
+/** Forme de comparaison d'un en-tête : sans accents, sans ponctuation ni espaces. */
+const headerKey = (v: unknown): string => normalizeLabel(v).replace(/[^A-Z0-9%]/g, '');
+const findHeader = (cells: unknown[], names: string[]): number => {
+  const keys = names.map(headerKey);
+  return cells.findIndex((c) => keys.includes(headerKey(c)));
+};
 
 /** Normalise un libellé : majuscules, accents retirés, espaces compactés. */
 export function normalizeLabel(v: unknown): string {
@@ -70,8 +78,8 @@ export async function parseWorkbook(buf: ArrayBuffer | Uint8Array, filename: str
     if (fi < 0) continue;
     headerRow = i;
     colFamily = fi;
-    colOrdre = cells.indexOf(normalizeLabel(HEADER_ORDRE));
-    colSortie = cells.indexOf(normalizeLabel(HEADER_SORTIE));
+    colOrdre = findHeader(cells, HEADERS_ORDRE);
+    colSortie = findHeader(cells, HEADERS_SORTIE);
   }
   if (headerRow < 0) throw new Error(`En-tête "${HEADER_FAMILY}" introuvable dans ${filename}.`);
   if (colOrdre < 0 || colSortie < 0) {
