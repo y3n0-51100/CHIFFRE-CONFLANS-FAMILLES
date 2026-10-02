@@ -7,7 +7,7 @@ import Heatmap from './Heatmap.tsx';
 import {
   allMonths, buildIndex, commonMonths, familyLines, filledMonths, listFiscalYears, monthSeries, total,
 } from '../lib/analytics.ts';
-import { MONTH_SHORT, fiscalLabel } from '../lib/fiscal.ts';
+import { MONTH_LABELS, MONTH_SHORT, fiscalLabel } from '../lib/fiscal.ts';
 import { fmtCompact, fmtEur, fmtPct, fmtSignedEur, trendClass } from '../lib/format.ts';
 import { UNIVERSE_LABELS, universeOf } from '../lib/market.ts';
 import { downloadCsv } from '../lib/csv.ts';
@@ -21,6 +21,7 @@ interface Props {
   fyCompare: number;
   family: string | null;
   samePerimeter: boolean;
+  month: number | null;
   theme: Theme;
   onPickFamily: (f: string) => void;
 }
@@ -29,7 +30,7 @@ type SortKey = 'family' | 'current' | 'compare' | 'delta' | 'pct' | 'share';
 type View = 'table' | 'heatmap';
 
 export default function Families({
-  rows, metric, fyCurrent, fyCompare, family, samePerimeter, theme, onPickFamily,
+  rows, metric, fyCurrent, fyCompare, family, samePerimeter, month, theme, onPickFamily,
 }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('current');
   const [asc, setAsc] = useState(false);
@@ -39,7 +40,7 @@ export default function Families({
   const idx = useMemo(() => buildIndex(rows, metric), [rows, metric]);
   const monthsCur = useMemo(() => filledMonths(rows, fyCurrent), [rows, fyCurrent]);
   const monthsCmp = useMemo(() => filledMonths(rows, fyCompare), [rows, fyCompare]);
-  const scope = samePerimeter ? commonMonths(monthsCur, monthsCmp) : allMonths;
+  const scope = month !== null ? new Set([month]) : samePerimeter ? commonMonths(monthsCur, monthsCmp) : allMonths;
 
   const lines = useMemo(() => familyLines(idx, fyCurrent, fyCompare, scope), [idx, fyCurrent, fyCompare, scope]);
 
@@ -98,7 +99,7 @@ export default function Families({
             <h2>{view === 'table' ? 'Toutes les familles' : 'Saisonnalité par famille'}</h2>
             <p className="card-sub" style={{ margin: 0 }}>
               {view === 'table'
-                ? `${fiscalLabel(fyCurrent)} face à ${fiscalLabel(fyCompare)} · ${samePerimeter ? `${scope.size} mois communs` : 'exercice complet'}`
+                ? `${fiscalLabel(fyCurrent)} face à ${fiscalLabel(fyCompare)} · ${month !== null ? MONTH_LABELS[month] : samePerimeter ? `${scope.size} mois communs` : 'exercice complet'}`
                 : `Répartition du chiffre mois par mois sur l'exercice ${fiscalLabel(fyCurrent)}`}
             </p>
           </div>

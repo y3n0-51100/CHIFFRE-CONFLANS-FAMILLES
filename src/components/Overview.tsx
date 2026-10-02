@@ -22,19 +22,20 @@ interface Props {
   family: string | null;
   universe: Universe | null;
   samePerimeter: boolean;
+  month: number | null;
   theme: Theme;
   onPickFamily: (f: string) => void;
 }
 
 export default function Overview({
-  rows, metric, fyCurrent, fyCompare, family, universe, samePerimeter, theme, onPickFamily,
+  rows, metric, fyCurrent, fyCompare, family, universe, samePerimeter, month, theme, onPickFamily,
 }: Props) {
   const C = chartColors(theme);
   const idx = useMemo(() => buildIndex(rows, metric), [rows, metric]);
 
   const monthsCur = useMemo(() => filledMonths(rows, fyCurrent), [rows, fyCurrent]);
   const monthsCmp = useMemo(() => filledMonths(rows, fyCompare), [rows, fyCompare]);
-  const scope = samePerimeter ? commonMonths(monthsCur, monthsCmp) : allMonths;
+  const scope = month !== null ? new Set([month]) : samePerimeter ? commonMonths(monthsCur, monthsCmp) : allMonths;
 
   const cur = total(idx, fyCurrent, family, scope);
   const cmp = total(idx, fyCompare, family, scope);
@@ -58,7 +59,9 @@ export default function Overview({
   }, [rows, metric, family]);
 
   const missing = periodsMissing(rows, fyCurrent);
-  const scopeLabel = samePerimeter
+  const scopeLabel = month !== null
+    ? MONTH_LABELS[month]
+    : samePerimeter
     ? `${scope.size} mois communs`
     : `exercice complet · ${monthsCur.size}/12 mois saisis`;
 

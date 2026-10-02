@@ -3,7 +3,7 @@ import Login from './components/Login.tsx';
 import { restoreSession, canSee, scopeOf, signOut, ROLE_LABELS, type Session } from './lib/session.ts';
 import { loadRows, storeMode } from './lib/store.ts';
 import { listFamilies, listFiscalYears } from './lib/analytics.ts';
-import { currentFiscalYear, fiscalLabel } from './lib/fiscal.ts';
+import { MONTH_LABELS, currentFiscalYear, fiscalLabel } from './lib/fiscal.ts';
 import { UNIVERSE_LABELS, universeOf, type Universe } from './lib/market.ts';
 import { applyTheme, initialTheme, type Theme } from './lib/theme.ts';
 import type { Metric, Row } from './lib/types.ts';
@@ -54,6 +54,8 @@ export default function App() {
   const [fyCurrent, setFyCurrent] = useState<number | null>(null);
   const [fyCompare, setFyCompare] = useState<number | null>(null);
   const [samePerimeter, setSamePerimeter] = useState(true);
+  // Mois isolé (index 0..11 dans l'exercice, avril = 0) ; null = toute la période.
+  const [month, setMonth] = useState<number | null>(null);
 
   useEffect(() => { applyTheme(theme); }, [theme]);
 
@@ -190,12 +192,19 @@ export default function App() {
             </select>
           </div>
           <div className="field">
+            <label>Mois</label>
+            <select value={month ?? ''} onChange={(e) => setMonth(e.target.value === '' ? null : Number(e.target.value))}>
+              <option value="">Toute la période</option>
+              {MONTH_LABELS.map((l, i) => <option key={l} value={i}>{l}</option>)}
+            </select>
+          </div>
+          {month === null && <div className="field">
             <label>Périmètre</label>
             <div className="segmented">
               <button className={samePerimeter ? 'active' : ''} onClick={() => setSamePerimeter(true)}>Mois communs</button>
               <button className={!samePerimeter ? 'active' : ''} onClick={() => setSamePerimeter(false)}>Exercice complet</button>
             </div>
-          </div>
+          </div>}
           <div className="field">
             <label>Univers</label>
             <div className="chips">
@@ -233,14 +242,14 @@ export default function App() {
           {ready && tab === 'synthese' && (
             <Overview
               rows={scopedRows} metric={metric} fyCurrent={fyCurrent} fyCompare={fyCompare}
-              family={family || null} universe={universe} samePerimeter={samePerimeter}
+              family={family || null} universe={universe} samePerimeter={samePerimeter} month={month}
               theme={theme} onPickFamily={setFamily}
             />
           )}
           {ready && tab === 'familles' && (
             <Families
               rows={scopedRows} metric={metric} fyCurrent={fyCurrent} fyCompare={fyCompare}
-              family={family || null} samePerimeter={samePerimeter} theme={theme} onPickFamily={setFamily}
+              family={family || null} samePerimeter={samePerimeter} month={month} theme={theme} onPickFamily={setFamily}
             />
           )}
           {ready && tab === 'stock' && <StockPanel session={session} rows={scopedRows} fyCurrent={fyCurrent} />}
